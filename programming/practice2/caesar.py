@@ -11,6 +11,10 @@ def define_lang(word):
 
     Returns: 
         lang (str): Определённый язык
+
+    Example:
+        >>>> define_lang('Бипки')
+        rus 
     """
     word = word.lower()
     lang = "rus"
@@ -31,14 +35,18 @@ def define_lang(word):
 
 def cipher(word, key=3):
     """
-    Зашифровывает фразу шифром Цезаря
+    Зашифровывает слово шифром Цезаря
     
     Args:
-        word (str): Фраза, которую надо зашифровать
-        key (int): Ключ шифрования
+        word (str): Слово, которое надо зашифровать
+        key (int, optional): Ключ шифрования. По умолчанию 3
     
     Returns:
-        str: Зашифрованная фраза
+        str: Зашифрованное слово
+
+    Example:
+        >>>> cipher('Лягушки это земноводные')
+        Овёцынл ахс кзпрсесжрюз
     """
     lang = define_lang(word)
     if lang == "none":
@@ -73,10 +81,14 @@ def decipher(word, key=3):
     
     Args:
         word (str): Зашифрованная фраза
-        key (int): Ключ шифрования
+        key (int, optional): Ключ шифрования. По умолчанию 3
     
     Returns:
         str: Расшифрованная фраза
+    
+    Example:
+        >>>> decipher('Овёцынл ахс кзпрсесжрюз')
+        Лягушки это земноводные
     """
     lang = define_lang(word)
     if lang == "none":
