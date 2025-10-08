@@ -35,14 +35,14 @@ def define_lang(word):
 
 def cipher(word, key=3):
     """
-    Зашифровывает слово шифром Цезаря
+    Зашифровывает фразу шифром Цезаря
     
     Args:
-        word (str): Слово, которое надо зашифровать
+        word (str): Фраза, которую надо зашифровать
         key (int, optional): Ключ шифрования. По умолчанию 3
     
     Returns:
-        str: Зашифрованное слово
+        str: Зашифрованная фраза
 
     Example:
         >>>> cipher('Лягушки это земноводные')
@@ -92,7 +92,7 @@ def decipher(word, key=3):
     """
     lang = define_lang(word)
     if lang == "none":
-        return "Фраза введено некорректно"
+        return "Фраза введена некорректно"
     else:
         newword = list(word)
         if lang == "rus":
