@@ -14,6 +14,7 @@ class Product:
         self.price = price * (1 - discount / 100) 
         self.category = category
         self.stock = stock
+
     @property
     def quantity(self):
         return self.stock
