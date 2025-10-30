@@ -113,15 +113,17 @@ class Snake(GameObject):
         return self.positions[0]
 
     def move(self):
+        if self.last != self.get_head_position():
+            self.last = self.positions[-1]
         """Двигает змейку согласно направлению движения."""
-        if self.positions[0][0] > SCREEN_WIDTH:
-            self.positions.insert(0, ((0, self.positions[0][1])))
+        if self.positions[0][0] >= SCREEN_WIDTH:
+            self.positions[0] = (0, self.positions[0][1])
         elif self.positions[0][0] < 0:
-            self.positions.insert(0, (SCREEN_WIDTH, self.positions[0][1]))
-        elif self.positions[0][1] > SCREEN_HEIGHT:
-            self.positions.insert(0, ((self.positions[0][0], 0)))
+            self.positions[0] = (SCREEN_WIDTH, self.positions[0][1])
+        elif self.positions[0][1] >= SCREEN_HEIGHT:
+            self.positions[0] = (self.positions[0][0], 0)
         elif self.positions[0][1] < 0:
-            self.positions.insert(0, ((self.positions[0][0], SCREEN_HEIGHT)))
+            self.positions[0] = (self.positions[0][0], SCREEN_HEIGHT)
         if self.direction == RIGHT:
             self.positions.insert(0, (self.positions[0][0] + GRID_SIZE,
                                       self.positions[0][1]))
@@ -193,8 +195,9 @@ def handle_keys(game_object):
 
 def main():
     """Главная функция."""
-
+    # Инициализация PyGame:
     pygame.init()
+    # Тут нужно создать экземпляры классов.
     apple = Apple(APPLE_COLOR)
     snake = Snake((0, 0), SNAKE_COLOR)
 
@@ -234,6 +237,7 @@ def main():
             apple.draw()
             snake.reset()
 
+        # Тут опишите основную логику игры.
         pygame.display.update()
 
 
