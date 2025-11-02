@@ -3,10 +3,10 @@ response = requests.get("https://pokeapi.co/api/v2/pokemon")
 responselist = response.json()["results"]
 pokedict = dict()
 for pokemon in responselist:
-    pokedict[pokemon['name']] = pokemon['url'] 
+    pokedict[pokemon['name']] = pokemon['url']
 def get_pokemon_stats(pokemon_name: str):
     """
-    Выдаёт данные покемона: имя, тип, вес, рост, !имена! способностей
+    Выдаёт данные покемона: имя, типы, вес, рост, названия способностей
 
     Args:
         pokemon_name (str): Имя покемона на английском
@@ -21,10 +21,10 @@ def get_pokemon_stats(pokemon_name: str):
         types.append(type["type"]["name"])
 
     height = get_poke["height"]
-
-    moves = get_poke["moves"]
-    movelist = []
-    for move in moves:
-        movelist.append(move["move"]["name"])
+    abilities = get_poke["abilities"]
+    abilist = []
+    for abi in abilities:
+        abilist.append(abi["ability"]["name"])
     return {"name": pokemon_name, "types": types, "weight": weight,
-            "height": height, "moves": movelist}
+             "height": height, "abilities": abilist}
+# print(get_pokemon_stats("beedrill")["abilities"])
