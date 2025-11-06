@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Книжки{% endblock %}
+{% block content %}
+<h1>Книги</h1>
+
+{% for book in books %}
+<article>
+    <h3>{{book.title}}</h3>
+    <h3>{{book.author}}</h3>
+    <h3>{{book.year}}</h3>
+    <h3>------------------</h3>
+</article>
+{% endfor %}
+{% endblock %}
