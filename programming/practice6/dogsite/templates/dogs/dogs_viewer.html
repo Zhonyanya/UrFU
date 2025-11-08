@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Собакены{% endblock %}
+
+{% block content %}
+{% if breedslist %}
+<div class="breeds-list-container">
+    <button type="button" class="toggle-breeds-btn" onclick="toggleBreedsList()">
+        Показать список пород
+    </button>
+    
+    <div class="breeds-list" id="breedsList">
+        <ol>
+            {% for breed in breedslist %}
+            <li>{{ breed }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+</div>
+{% endif %}
+
+<form method="GET">
+    <h3>Введите породы через запятую</h3>
+    <input type="text" id="input_field" name="input_field" required>
+    <button type="submit">Отправить</button>
+</form>
+
+<div class="images-container">
+    {% for image in imagelist %}
+    <img src="{{ image }}" alt="Фото собаки" class="dog-image">
+    {% endfor %}
+</div>
+
+<script>
+    function toggleBreedsList() {
+        const breedsList = document.getElementById('breedsList');
+        const toggleBtn = document.querySelector('.toggle-breeds-btn');
+        
+        breedsList.classList.toggle('visible');
+        
+        if (breedsList.classList.contains('visible')) {
+            toggleBtn.textContent = 'Скрыть список пород';
+        } else {
+            toggleBtn.textContent = 'Показать список пород';
+        }
+    }
+</script>
+{% endblock %}
