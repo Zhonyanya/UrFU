@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %} Входящие письма {% endblock %}
+{% block header %} Входящие письма: {% endblock %}
+{% block content %}
+    <ul>
+    {% for email in inbox_emails %}
+        {% if not email.sent_by_you and not email.trashed and not email.archived %}
+            <li><a href="{% url 'email_detail' email.id %}">{{ email.subject }}</a></li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% endblock %}
+{% block footer %}
+    <a href="{% url 'sent' %}">Отправленные сообщения</a>
+    <a href="{% url 'trash' %}">Мусорка</a>
+    <a href="{% url 'archive' %}">Архив</a>
+{% endblock %}

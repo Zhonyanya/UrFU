@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ letter.subject }}{% endblock %}
+{% block content %}
+    <p>Тема: {{ letter.subject }}</p>
+    <p>От кого: {{ letter.sender }}</p>
+    <p>Кому: {{ letter.recipient }}</p>
+    <p>{{ letter.content }}</p>
+{% endblock %}
+{% block footer %}
+    <a href="{% url 'index' %}">Входящие сообщения</a>
+    <a href="{% url 'sent' %}">Отправленные сообщения</a>
+    <a href="{% url 'trash' %}">Мусорка</a>
+    <a href="{% url 'archive' %}">Архив</a>
+{% endblock %}
