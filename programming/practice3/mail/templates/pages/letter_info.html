@@ -7,8 +7,9 @@
     <p>{{ letter.content }}</p>
 {% endblock %}
 {% block footer %}
-    <a href="{% url 'index' %}">Входящие сообщения</a>
-    <a href="{% url 'sent' %}">Отправленные сообщения</a>
-    <a href="{% url 'trash' %}">Мусорка</a>
-    <a href="{% url 'archive' %}">Архив</a>
+    <a href="{% url 'list_folders' %}">Вернуться к папкам</a>
+    <a href="{% url 'index' %}">На главную</a>
+    <a href="{% url 'move_to_folder' letter.id 'Архив' %}">Переместить в архив</a>
+    <a href="{% url 'move_to_folder' letter.id 'Корзина' %}">Переместить корзину</a>
+    <a href="{% url 'move_to_folder' letter.id 'Удалённое' %}">Удалить</a>
 {% endblock %}

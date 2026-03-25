@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Папки{% endblock %}
+{% block header %}Папки{% endblock %}
+{% block content %}
+    <ul>
+    {% for folder in folders %}
+        {% if folder.name != "Удалённое" %}
+            <li><a href="{% url 'folder_view' folder.name %}">{{ folder.name }}</a></li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% endblock %}

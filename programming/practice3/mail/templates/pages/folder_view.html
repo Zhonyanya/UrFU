@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ folder_name }}{% endblock %}
+{% block header %}{{ folder_name }}{% endblock %}
+{% block content %}
+    <ul>
+        {% for email in emails %}
+            <li><a href="{% url 'email_detail' email.id %}">{{ email.subject }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+{% block footer %}
+    <a href="{% url 'list_folders' %}">Вернуться к папкам</a>
+    <a href="{% url 'index' %}">На главную</a>
+{% endblock %}
