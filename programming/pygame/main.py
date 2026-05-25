@@ -5,6 +5,7 @@ from input_handler import InputHandler
 from player import Player
 from arena import Arena
 from renderer import Renderer
+from enemy import Enemy
 
 
 def main():
@@ -16,7 +17,7 @@ def main():
     input_handler = InputHandler()
     arena = Arena()
     player = Player()
-    enemies = []
+    enemies = [Enemy((SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))]
     renderer = Renderer()
 
     running = True
