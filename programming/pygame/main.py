@@ -5,7 +5,7 @@ from input_handler import InputHandler
 from player import Player
 from arena import Arena
 from renderer import Renderer
-from enemy import Enemy
+from enemy import Minion
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
     input_handler = InputHandler()
     arena = Arena()
     player = Player()
-    enemies = [Enemy((SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))]
+    enemies = [Minion((SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))]
     renderer = Renderer()
 
     running = True
@@ -30,7 +30,7 @@ def main():
 
         movement_vec = input_handler.get_movement_vector()
 
-        player.update(dt, movement_vec, arena.rect)
+        player.update(dt, movement_vec, arena.rect, input_handler.mouse_pos)
         for enemy in enemies:
             enemy.update(dt, player.pos)
 
