@@ -1,7 +1,28 @@
-import pygame
+import pygame, math
 from constants import (PATHFINDING_CELL_SIZE, MINION_RADIUS, MINION_COLOR,
                        MINION_MAX_SPEED, MINION_ACCELERATION)
 from pathfinder import Pathfinder
+
+def _get_closest_point_on_obb(center, half_w, half_h, angle, point):
+    """Находит ближайшую точку повёрнутого прямоугольника к заданной точке."""
+    diff = point - center
+    # 1. Переводим точку в локальные координаты прямоугольника
+    cos_a = math.cos(-angle)
+    sin_a = math.sin(-angle)
+    lx = diff.x * cos_a - diff.y * sin_a
+    ly = diff.x * sin_a + diff.y * cos_a
+
+    # 2. Ограничиваем (clamp) границами прямоугольника
+    lx = max(-half_w, min(half_w, lx))
+    ly = max(-half_h, min(half_h, ly))
+
+    # 3. Возвращаем в мировые координаты
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    wx = center.x + lx * cos_a - ly * sin_a
+    wy = center.y + lx * sin_a + ly * cos_a
+    return pygame.math.Vector2(wx, wy)
+
 
 class ChaserEnemy:
     """Базовый класс для врагов с A* пасфайндингом."""
@@ -54,6 +75,27 @@ class ChaserEnemy:
 
         self.pos += self.vel * dt
 
+    def resolve_collision(self, player):
+        closest = _get_closest_point_on_obb(
+            player.pos, player.half_size, player.half_size, player.angle, self.pos
+        )
+        dist_vec = self.pos - closest
+        dist = dist_vec.length()
+
+        if dist < self.radius:
+            if dist > 0:
+                overlap = self.radius - dist
+                push_dir = dist_vec.normalize()
+                # Выталкиваем игрока ВНЕ сферы врага
+                player.pos -= push_dir * overlap
+            else:
+                # Крайний случай: центры совпали, толкаем по нормали к грани
+                push_dir = pygame.math.Vector2(-math.cos(player.angle),
+                                               -math.sin(player.angle))
+                player.pos += push_dir * self.radius
+            # Синхронизируем rect после физического сдвига
+            player.rect.center = (round(player.pos.x), round(player.pos.y))
+
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.pos.x),
                            int(self.pos.y)), self.radius)
@@ -69,3 +111,17 @@ class Minion(ChaserEnemy):
             acceleration=MINION_ACCELERATION,
             path_update_interval=0.2
         )
+
+
+def resolve_enemy_collisions(enemies):
+    for i in range(len(enemies)):
+        for j in range(i + 1, len(enemies)):
+            e1, e2 = enemies[i], enemies[j]
+            diff = e1.pos - e2.pos
+            dist = diff.length()
+            min_dist = e1.radius + e2.radius
+            if 0 < dist < min_dist:
+                overlap = min_dist - dist
+                push = diff.normalize() * (overlap / 2)
+                e1.pos += push
+                e2.pos -= push

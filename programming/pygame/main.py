@@ -1,11 +1,11 @@
 import pygame
 import sys
-from constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, FIXED_DT, FPS
 from input_handler import InputHandler
 from player import Player
 from arena import Arena
 from renderer import Renderer
-from enemy import Minion
+from enemy import Minion, resolve_enemy_collisions
 
 
 def main():
@@ -21,18 +21,34 @@ def main():
     renderer = Renderer()
 
     running = True
+    accumulator = 0.0
+
     while running:
-        dt = clock.tick(FPS) / 1000.0
+        frame_dt = clock.tick(FPS) / 1000.0
+
+        if frame_dt > 0.25:
+            frame_dt = 0.25
+        accumulator += frame_dt
 
         input_handler.update()
         if input_handler.quit_requested:
             break
 
         movement_vec = input_handler.get_movement_vector()
+        mouse_pos = input_handler.mouse_pos
 
-        player.update(dt, movement_vec, arena.rect, input_handler.mouse_pos)
-        for enemy in enemies:
-            enemy.update(dt, player.pos)
+        while accumulator >= FIXED_DT:
+            player.update(FIXED_DT, movement_vec, arena.rect, mouse_pos)
+
+            for enemy in enemies:
+                enemy.update(FIXED_DT, player.pos)
+
+            resolve_enemy_collisions(enemies)
+
+            for enemy in enemies:
+                enemy.resolve_collision(player)
+
+            accumulator -= FIXED_DT
 
         renderer.draw(screen, arena, player, enemies)
 
