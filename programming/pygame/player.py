@@ -1,4 +1,3 @@
-# player.py
 import pygame
 import math
 from constants import (PLAYER_SIZE, PLAYER_COLOR, PLAYER_START_POS,

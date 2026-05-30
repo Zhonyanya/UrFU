@@ -131,6 +131,7 @@ class ChaserEnemy:
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.pos.x),
+        pygame.draw.circle(surface, self.color, (int(self.pos.x),
                            int(self.pos.y)), self.radius)
 
 

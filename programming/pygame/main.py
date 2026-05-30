@@ -41,7 +41,7 @@ def main():
             player.update(FIXED_DT, movement_vec, arena.rect, mouse_pos)
 
             for enemy in enemies:
-                enemy.update(FIXED_DT, player.pos, enemies)
+                enemy.update(FIXED_DT, player.pos)
 
             resolve_enemy_collisions(enemies)
 
