@@ -20,8 +20,8 @@ class Player:
         pygame.draw.rect(self.base_surface, PLAYER_COLOR, (0, 0, self.size, self.size))
         # "Лицо" (для наглядности направления)
         half = self.half_size
-        pygame.draw.rect(self.base_surface, (255, 255, 255), (half + 2, half - 5, 8, 4))
-        pygame.draw.rect(self.base_surface, (255, 255, 255), (half + 2, half + 2, 8, 4))
+        pygame.draw.rect(self.base_surface, (0, 255, 0), (half + 2, half - 5, 8, 4))
+        pygame.draw.rect(self.base_surface, (0, 255, 0), (half + 2, half + 2, 8, 4))
 
     def update(self, dt, input_vector, arena_rect, mouse_pos):
         # Движение
