@@ -3,6 +3,7 @@ import math
 from constants import (MINION_RADIUS, MINION_COLOR,
                        MINION_MAX_SPEED, MINION_ACCELERATION)
 
+
 def _get_closest_point_on_obb(center, half_w, half_h, angle, point):
     """Находит ближайшую точку повёрнутого прямоугольника к заданной точке."""
     diff = point - center
@@ -24,9 +25,9 @@ def _get_closest_point_on_obb(center, half_w, half_h, angle, point):
 
 class ChaserEnemy:
     """Базовый класс для врагов с steering behaviors (Seek + Separation)."""
-    
+
     def __init__(self, start_pos, radius, color,
-                 max_speed, acceleration, separation_distance=60.0,
+                 max_speed, acceleration, separation_distance=50.0,
                  max_force=5000.0):
         self.pos = pygame.math.Vector2(start_pos)
         self.vel = pygame.math.Vector2(0, 0)
@@ -53,7 +54,7 @@ class ChaserEnemy:
         total = 0
 
         if spatial_grid:
-            nearby = spatial_grid.get_nearby(self)
+            nearby = spatial_grid.query(self)
             for other in nearby:
                 if other is self:
                     continue
@@ -64,7 +65,6 @@ class ChaserEnemy:
                     steer += diff
                     total += 1
         else:
-            # Fallback: полная проверка O(N)
             for other in enemies:
                 if other is self:
                     continue
@@ -98,7 +98,7 @@ class ChaserEnemy:
         if enemies is not None:
             separation_force = self.separation(enemies, spatial_grid)
 
-        steering = seek_force * 1.0 + separation_force * 1.5
+        steering = seek_force * 1.0 + separation_force * 0.8
 
         steering = self._clamp_magnitude(steering, self.max_force)
         self.vel += steering * dt
@@ -131,6 +131,7 @@ class ChaserEnemy:
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.pos.x),
+                                                 int(self.pos.y)), self.radius)
         pygame.draw.circle(surface, self.color, (int(self.pos.x),
                            int(self.pos.y)), self.radius)
 
@@ -143,17 +144,43 @@ class Minion(ChaserEnemy):
             color=MINION_COLOR,
             max_speed=MINION_MAX_SPEED,
             acceleration=MINION_ACCELERATION,
-            separation_distance=70.0,
+            separation_distance=50.0,
             max_force=3000.0
         )
 
 
-def resolve_enemy_collisions(enemies):
-    """
-    Упрощённая функция для финальной коррекции позиций.
-    Теперь основная работа делается через separation steering,
-    эта функция только предотвращает полное перекрытие.
-    """
+def _resolve_pair(e1, e2):
+    """Внутренняя функция для разрешения коллизии двух конкретных врагов."""
+    diff = e1.pos - e2.pos
+    dist = diff.length()
+    min_dist = e1.radius + e2.radius
+
+    if 0 < dist < min_dist:
+        overlap = min_dist - dist
+        push = diff.normalize() * (overlap / 2)
+        e1.pos += push
+        e2.pos -= push
+
+
+def resolve_enemy_collisions(enemies, spatial_grid=None):
+    """Коллизии противников."""
+    if spatial_grid:
+        checked_pairs = set()
+        for enemy in enemies:
+            nearby = spatial_grid.query(enemy)
+            for other in nearby:
+                if enemy is other:
+                    continue
+                # создаём уникальный айди чтобы не чекать e1e2 и e2e1 дважды
+                pair_id = tuple(sorted((id(enemy), id(other))))
+                if pair_id in checked_pairs:
+                    continue
+                checked_pairs.add(pair_id)
+                _resolve_pair(enemy, other)
+    else:
+        for i in range(len(enemies)):
+            for j in range(i + 1, len(enemies)):
+                _resolve_pair(enemies[i], enemies[j])
     for i in range(len(enemies)):
         for j in range(i + 1, len(enemies)):
             e1, e2 = enemies[i], enemies[j]

@@ -1,11 +1,12 @@
 import pygame
 import sys
-from constants import SCREEN_HEIGHT, SCREEN_WIDTH, FIXED_DT, FPS
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, FIXED_DT, FPS, SG_CELL_SIZE
 from input_handler import InputHandler
 from player import Player
 from arena import Arena
 from renderer import Renderer
 from enemy import Minion, resolve_enemy_collisions
+from spatial_grid import SpatialGrid
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
     player = Player()
     enemies = [Minion((SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))]
     renderer = Renderer()
-
+    spatial_grid = SpatialGrid(SG_CELL_SIZE)
     running = True
     accumulator = 0.0
 
@@ -34,16 +35,23 @@ def main():
         if input_handler.quit_requested:
             break
 
+        if input_handler.spawn_enemy_requested:
+            enemies.append(Minion(input_handler.mouse_pos))
+
         movement_vec = input_handler.get_movement_vector()
         mouse_pos = input_handler.mouse_pos
 
         while accumulator >= FIXED_DT:
             player.update(FIXED_DT, movement_vec, arena.rect, mouse_pos)
 
+            spatial_grid.clear()
             for enemy in enemies:
-                enemy.update(FIXED_DT, player.pos)
+                spatial_grid.insert(enemy)
 
-            resolve_enemy_collisions(enemies)
+            for enemy in enemies:
+                enemy.update(FIXED_DT, player.pos, enemies, spatial_grid)
+
+            resolve_enemy_collisions(enemies, spatial_grid)
 
             for enemy in enemies:
                 enemy.resolve_collision(player)

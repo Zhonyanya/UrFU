@@ -6,14 +6,18 @@ class InputHandler:
         self.quit_requested = False
         self.keys = None
         self.mouse_pos = (0, 0)
+        self.spawn_enemy_requested = False
 
     def update(self):
         """Считывает сырые события и состояния кнопок за кадр."""
         self.keys = pygame.key.get_pressed()
         self.mouse_pos = pygame.mouse.get_pos()
+        self.spawn_enemy_requested = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit_requested = True
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 2:
+                self.spawn_enemy_requested = True
 
     def get_movement_vector(self):
         """Возвращает нормализованный вектор движения на основе WASD."""
