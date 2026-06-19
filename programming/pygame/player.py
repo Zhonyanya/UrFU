@@ -47,6 +47,7 @@ class Player:
     def draw(self, surface):
         # Поворачиваем ВЕСЬ квадрат
         # -math.degrees учитывает разницу между математическими углами и Y-down в Pygame
-        rotated = pygame.transform.rotate(self.base_surface, -math.degrees(self.angle))
+        rotated = pygame.transform.rotate(self.base_surface,
+                                          -math.degrees(self.angle))
         rect = rotated.get_rect(center=(self.pos.x, self.pos.y))
         surface.blit(rotated, rect.topleft)
