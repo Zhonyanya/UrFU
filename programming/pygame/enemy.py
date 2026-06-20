@@ -28,7 +28,7 @@ class ChaserEnemy:
 
     def __init__(self, start_pos, radius, color,
                  max_speed, acceleration, separation_distance=50.0,
-                 max_force=5000.0):
+                 max_force=5000.0, max_hp=30):
         self.pos = pygame.math.Vector2(start_pos)
         self.vel = pygame.math.Vector2(0, 0)
         self.radius = radius
@@ -38,6 +38,16 @@ class ChaserEnemy:
         self.acceleration = acceleration
         self.max_force = max_force
         self.separation_distance = separation_distance
+        self.max_hp = max_hp
+        self.hp = max_hp
+        self.alive = True
+
+    def take_damage(self, amount):
+        if not self.alive:
+            return
+        self.hp -= amount
+        if self.hp <= 0:
+            self.alive = False
 
     def seek(self, target):
         """Steering behavior: движение к цели."""
@@ -145,51 +155,6 @@ class Minion(ChaserEnemy):
             max_speed=MINION_MAX_SPEED,
             acceleration=MINION_ACCELERATION,
             separation_distance=50.0,
-            max_force=3000.0
+            max_force=3000.0,
+            max_hp=30
         )
-
-
-def _resolve_pair(e1, e2):
-    """Внутренняя функция для разрешения коллизии двух конкретных врагов."""
-    diff = e1.pos - e2.pos
-    dist = diff.length()
-    min_dist = e1.radius + e2.radius
-
-    if 0 < dist < min_dist:
-        overlap = min_dist - dist
-        push = diff.normalize() * (overlap / 2)
-        e1.pos += push
-        e2.pos -= push
-
-
-def resolve_enemy_collisions(enemies, spatial_grid=None):
-    """Коллизии противников."""
-    if spatial_grid:
-        checked_pairs = set()
-        for enemy in enemies:
-            nearby = spatial_grid.query(enemy)
-            for other in nearby:
-                if enemy is other:
-                    continue
-                # создаём уникальный айди чтобы не чекать e1e2 и e2e1 дважды
-                pair_id = tuple(sorted((id(enemy), id(other))))
-                if pair_id in checked_pairs:
-                    continue
-                checked_pairs.add(pair_id)
-                _resolve_pair(enemy, other)
-    else:
-        for i in range(len(enemies)):
-            for j in range(i + 1, len(enemies)):
-                _resolve_pair(enemies[i], enemies[j])
-    for i in range(len(enemies)):
-        for j in range(i + 1, len(enemies)):
-            e1, e2 = enemies[i], enemies[j]
-            diff = e1.pos - e2.pos
-            dist = diff.length()
-            min_dist = e1.radius + e2.radius
-
-            if 0 < dist < min_dist:
-                overlap = min_dist - dist
-                push = diff.normalize() * (overlap / 2)
-                e1.pos += push
-                e2.pos -= push

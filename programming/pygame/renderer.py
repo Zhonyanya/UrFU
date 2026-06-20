@@ -42,7 +42,7 @@ class Renderer:
 
         return surface
 
-    def draw(self, screen, arena, player, enemies):
+    def draw(self, screen, arena, player, enemies, projectile_manager):
         screen.fill(BACKGROUND_COLOR)
         arena.draw(screen)
 
@@ -50,8 +50,13 @@ class Renderer:
             enemy.draw(screen)
         player.draw(screen)
 
+        projectile_manager.draw(screen)
+
         self.light_map.fill(AMBIENT_COLOR)
 
+        # проверил метод через rotozoom - результаты гораздо хуже. придётся смириться
+        # angle_deg = -math.degrees(player.angle)
+        # rotated_cone = pygame.transform.rotozoom(self.light_cone, angle_deg, 1.0)
         rotated_cone = pygame.transform.rotate(self.light_cone,
                                                -math.degrees(player.angle))
 

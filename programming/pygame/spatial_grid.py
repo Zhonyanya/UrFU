@@ -21,8 +21,11 @@ class SpatialGrid:
         self.grid[cell].append(entity)
 
     def query(self, entity):
-        """Чекает клетки рядом."""
-        col, row = self.get_cell_coords(entity.pos)
+        return self.query_pos(entity.pos)
+
+    def query_pos(self, pos):
+        """Возвращает все сущности в 9 клетках от точки pos."""
+        col, row = self.get_cell_coords(pos)
         nearby = []
         for dx in range(col - 1, col + 2):
             for dy in range(row - 1, row + 2):
