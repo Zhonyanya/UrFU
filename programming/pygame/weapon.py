@@ -11,7 +11,7 @@ class Weapon:
     """
     def __init__(self, fire_rate, projectile_speed, damage, spread,
                  projectiles_per_shot, lifetime, is_automatic, color,
-                 muzzle_flash_radius, muzzle_flash_lifetime):
+                 muzzle_flash_radius, muzzle_flash_lifetime, is_global_light):
         self.fire_rate = fire_rate
         self.cooldown = 0.0
         self.projectile_speed = projectile_speed
@@ -23,6 +23,7 @@ class Weapon:
         self.color = color
         self.muzzle_flash_radius = muzzle_flash_radius
         self.muzzle_flash_lifetime = muzzle_flash_lifetime
+        self.is_global_light = is_global_light
 
     def update(self, dt):
         if self.cooldown > 0:
@@ -61,6 +62,7 @@ class Weapon:
             pos=muzzle_pos,
             color=self.color,
             radius=self.muzzle_flash_radius,
-            lifetime=self.muzzle_flash_lifetime
+            lifetime=self.muzzle_flash_lifetime,
+            is_global=self.is_global_light
         )
         return True

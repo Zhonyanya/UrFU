@@ -2,7 +2,7 @@ import pygame
 import math
 from constants import (BACKGROUND_COLOR, AMBIENT_COLOR,
                        LIGHT_COLOR, LIGHT_RADIUS, SCREEN_HEIGHT,
-                       SCREEN_WIDTH, LIGHT_ANGLE_RAD)
+                       SCREEN_WIDTH, LIGHT_ANGLE_RAD, GLOBAL_LIGHT_INTENSITY)
 
 
 class Renderer:
@@ -15,6 +15,7 @@ class Renderer:
             LIGHT_COLOR,
             AMBIENT_COLOR
         )
+        self.muzzle_flash_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
 
     @staticmethod
     def _create_cone_gradient(radius, angle_rad, center_color, edge_color):
@@ -42,7 +43,7 @@ class Renderer:
 
         return surface
 
-    def draw(self, screen, arena, player, enemies, projectile_manager):
+    def draw(self, screen, arena, player, enemies, projectile_manager, events):
         screen.fill(BACKGROUND_COLOR)
         arena.draw(screen)
 
@@ -64,6 +65,34 @@ class Renderer:
                                                   int(player.pos.y)))
 
         self.light_map.blit(rotated_cone, cone_rect.topleft,
+                            special_flags=pygame.BLEND_RGB_ADD)
+
+        self.muzzle_flash_surface.fill((0, 0, 0, 0))
+
+        for shot in events.shots_fired:
+            if shot['lifetime'] > 0:
+                if shot['is_global']:
+                    alpha = int(GLOBAL_LIGHT_INTENSITY *
+                                (shot['lifetime'] / shot['max_lifetime']))
+                    self.muzzle_flash_surface.fill((*shot['color'], alpha))
+                else:
+                    radius = shot['radius']
+                    pos = shot['pos']
+                    flash_surf = pygame.Surface((radius * 2, radius * 2),
+                                                pygame.SRCALPHA)
+                    for r in range(radius, 0, -1):
+                        t = r / radius
+                        alpha = int(255 * (1 - t) * (shot['lifetime'] /
+                                                     shot['max_lifetime']))
+                        color = (*shot['color'], alpha)
+                        pygame.draw.circle(flash_surf, color,
+                                           (radius, radius), r)
+
+                    self.muzzle_flash_surface.blit(flash_surf,
+                                                   (int(pos.x - radius), int(pos.y - radius)),
+                                                   special_flags=pygame.BLEND_RGBA_ADD)
+
+        self.light_map.blit(self.muzzle_flash_surface, (0, 0),
                             special_flags=pygame.BLEND_RGB_ADD)
 
         screen.blit(self.light_map, (0, 0),

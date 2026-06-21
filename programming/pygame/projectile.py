@@ -19,6 +19,7 @@ class Projectile:
         self.color = (255, 255, 255)
 
     def spawn(self, pos, angle, speed, damage, lifetime, color):
+        """Включает снаряд."""
         self.pos.update(pos)
         self.vel = pygame.math.Vector2(math.cos(angle),
                                        math.sin(angle)) * speed
@@ -28,12 +29,14 @@ class Projectile:
         self.color = color
 
     def update(self, dt):
+        """Обновляет позицию и время жизни снаряда.
+        Отключает снаряд."""
         if not self.active:
             return
         self.pos += self.vel * dt
         self.lifetime -= dt
         if self.lifetime <= 0:
-            return False
+            self.active = False
 
 
 class ProjectileManager:
@@ -43,6 +46,7 @@ class ProjectileManager:
         self.active_count = 0
 
     def spawn(self, pos, angle, speed, damage, lifetime, color):
+        """Спавнит снаряды."""
         for proj in self.pool:
             if not proj.active:
                 proj.spawn(pos, angle, speed, damage, lifetime, color)
@@ -51,6 +55,7 @@ class ProjectileManager:
         return None
 
     def update(self, dt):
+        """Обновляет количество снарядов и сами снаряды."""
         self.active_count = 0
         for proj in self.pool:
             if proj.active:

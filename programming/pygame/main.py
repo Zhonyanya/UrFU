@@ -24,6 +24,7 @@ from collision_system import (check_projectile_enemy_collisions,
                               resolve_enemy_player_collisions,
                               resolve_enemy_enemy_collisions)
 from fps_counter import FPSCounter
+from spawner import WaveSpawner
 
 
 def main():
@@ -35,12 +36,25 @@ def main():
     input_handler = InputHandler()
     arena = Arena()
     player = Player()
-    enemies = [Minion((SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))]
+    enemies = []
+
     renderer = Renderer()
     spatial_grid = SpatialGrid(SG_CELL_SIZE)
     projectile_manager = ProjectileManager()
     events = GameEvents()
     fps_counter = FPSCounter()
+
+    wave_spawner = WaveSpawner(
+        arena_rect=arena.rect,
+        spawn_factory=Minion,
+        initial_interval=4.0,
+        min_interval=2.0,
+        interval_decay=0.15,
+        base_count=3,
+        count_growth=2,
+        max_count=40,
+        spawn_margin=20.0
+    )
 
     minigun = Weapon(
         fire_rate=MINIGUN_FIRE_RATE,
@@ -52,7 +66,8 @@ def main():
         is_automatic=MINIGUN_IS_AUTOMATIC,
         color=MINIGUN_COLOR,
         muzzle_flash_radius=MINIGUN_MUZZLE_RADIUS,
-        muzzle_flash_lifetime=MINIGUN_MUZZLE_LIFETIME
+        muzzle_flash_lifetime=MINIGUN_MUZZLE_LIFETIME,
+        is_global_light=False
     )
     shotgun = Weapon(
         fire_rate=SHOTGUN_FIRE_RATE,
@@ -64,7 +79,8 @@ def main():
         is_automatic=SHOTGUN_IS_AUTOMATIC,
         color=SHOTGUN_COLOR,
         muzzle_flash_radius=SHOTGUN_MUZZLE_RADIUS,
-        muzzle_flash_lifetime=SHOTGUN_MUZZLE_LIFETIME
+        muzzle_flash_lifetime=SHOTGUN_MUZZLE_LIFETIME,
+        is_global_light=True
     )
     weapons_by_button = {0: minigun, 2: shotgun}
 
@@ -96,7 +112,11 @@ def main():
             weapon.try_fire(is_held, just_pressed, player.pos, player.angle,
                             projectile_manager, events)
 
+        events.update(frame_dt)
+
         while accumulator >= FIXED_DT:
+
+            wave_spawner.update(FIXED_DT, enemies)
 
             player.update(FIXED_DT, movement_vec, arena.rect, mouse_pos)
 
@@ -119,7 +139,7 @@ def main():
 
             accumulator -= FIXED_DT
 
-        renderer.draw(screen, arena, player, enemies, projectile_manager)
+        renderer.draw(screen, arena, player, enemies, projectile_manager, events)
 
         # graph_width = 160
         # graph_height = 60
