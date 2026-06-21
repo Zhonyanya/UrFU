@@ -1,7 +1,10 @@
 import pygame
 import math
 from constants import (PLAYER_SIZE, PLAYER_COLOR, PLAYER_START_POS,
-                       PLAYER_MAX_SPEED, PLAYER_ACCELERATION, PLAYER_DECELERATION)
+                       PLAYER_MAX_SPEED, PLAYER_ACCELERATION,
+                       PLAYER_DECELERATION, PLAYER_MAX_HP,
+                       PLAYER_BLINK_FREQ, PLAYER_INVULNERABILITY_DURATION)
+
 
 class Player:
     def __init__(self):
@@ -12,15 +15,36 @@ class Player:
         self.rect = pygame.Rect(0, 0, self.size, self.size)
         self.rect.center = self.pos
         self.angle = 0.0  # Угол в радианах
+        self.max_hp = PLAYER_MAX_HP
+        self.hp = PLAYER_MAX_HP
+        self.invulnerability_time = 0.0
 
         # Пре-рендерим базовый спрайт
-        self.base_surface = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
+        self.base_surface = pygame.Surface((self.size, self.size),
+                                           pygame.SRCALPHA)
         # Тело игрока
-        pygame.draw.rect(self.base_surface, PLAYER_COLOR, (0, 0, self.size, self.size))
+        pygame.draw.rect(self.base_surface, PLAYER_COLOR, (0, 0, self.size,
+                                                           self.size))
         # "Лицо" (для наглядности направления)
         half = self.half_size
         pygame.draw.rect(self.base_surface, (0, 255, 0), (half + 2, half - 5, 8, 4))
         pygame.draw.rect(self.base_surface, (0, 255, 0), (half + 2, half + 2, 8, 4))
+
+    @property
+    def is_dead(self):
+        return self.hp <= 0
+
+    @property
+    def is_invulnerable(self):
+        return self.invulnerability_time > 0.0
+
+    def take_damage(self, amount):
+        """Наносит урон. Возвращает True если прошёл."""
+        if self.is_invulnerable or self.is_dead:
+            return False
+        self.hp = max(0.0, self.hp - amount)
+        self.invulnerability_time = PLAYER_INVULNERABILITY_DURATION
+        return True
 
     def update(self, dt, input_vector, arena_rect, mouse_pos):
         # Движение
@@ -44,9 +68,14 @@ class Player:
         dy = mouse_pos[1] - self.pos.y
         self.angle = math.atan2(dy, dx)
 
+        if self.invulnerability_time > 0.0:
+            self.invulnerability_time = max(0.0, self.invulnerability_time - dt)
+
     def draw(self, surface):
-        # Поворачиваем ВЕСЬ квадрат
-        # -math.degrees учитывает разницу между математическими углами и Y-down в Pygame
+        if self.is_invulnerable:
+            if int(self.invulnerability_time * PLAYER_BLINK_FREQ) % 2 == 0:
+                return
+
         rotated = pygame.transform.rotate(self.base_surface,
                                           -math.degrees(self.angle))
         rect = rotated.get_rect(center=(self.pos.x, self.pos.y))

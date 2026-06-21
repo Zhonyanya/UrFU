@@ -9,9 +9,11 @@ class InputHandler:
         self.mouse_buttons = (False, False, False)  # лкм скм пкм
         self._prev_mouse_buttons = (False, False, False)
         self.spawn_enemy_requested = False
+        self._keys_just_pressed = set()
 
     def update(self):
         """Считывает сырые события и состояния кнопок за кадр."""
+        self._keys_just_pressed.clear()
         self.keys = pygame.key.get_pressed()
         self.mouse_pos = pygame.mouse.get_pos()
         self._prev_mouse_buttons = self.mouse_buttons
@@ -21,6 +23,8 @@ class InputHandler:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit_requested = True
+            elif event.type == pygame.KEYDOWN:
+                self._keys_just_pressed.add(event.key)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 2:
                 self.spawn_enemy_requested = True
 
@@ -48,3 +52,7 @@ class InputHandler:
         """Кнопка была нажата в этом кадре?"""
         return (self.mouse_buttons[button] and
                 not self._prev_mouse_buttons[button])
+
+    def is_key_just_pressed(self, key):
+        """Была ли клавиша нажата в этом кадре."""
+        return key in self._keys_just_pressed

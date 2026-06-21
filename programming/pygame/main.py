@@ -22,40 +22,15 @@ from projectile import ProjectileManager
 from events import GameEvents
 from collision_system import (check_projectile_enemy_collisions,
                               resolve_enemy_player_collisions,
-                              resolve_enemy_enemy_collisions)
+                              resolve_enemy_enemy_collisions,
+                              check_player_damage)
 from fps_counter import FPSCounter
 from spawner import WaveSpawner
+from hud import HUD
+from game_over_screen import GameOverScreen
 
 
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Roguelite Arena")
-    clock = pygame.time.Clock()
-
-    input_handler = InputHandler()
-    arena = Arena()
-    player = Player()
-    enemies = []
-
-    renderer = Renderer()
-    spatial_grid = SpatialGrid(SG_CELL_SIZE)
-    projectile_manager = ProjectileManager()
-    events = GameEvents()
-    fps_counter = FPSCounter()
-
-    wave_spawner = WaveSpawner(
-        arena_rect=arena.rect,
-        spawn_factory=Minion,
-        initial_interval=4.0,
-        min_interval=2.0,
-        interval_decay=0.15,
-        base_count=3,
-        count_growth=2,
-        max_count=40,
-        spawn_margin=20.0
-    )
-
+def _create_weapons() -> dict[int, 'Weapon']:
     minigun = Weapon(
         fire_rate=MINIGUN_FIRE_RATE,
         projectile_speed=MINIGUN_PROJECTILE_SPEED,
@@ -82,7 +57,54 @@ def main():
         muzzle_flash_lifetime=SHOTGUN_MUZZLE_LIFETIME,
         is_global_light=True
     )
-    weapons_by_button = {0: minigun, 2: shotgun}
+    return {0: minigun, 2: shotgun}
+
+
+def _create_game(arena_rect_holder: list) -> dict:
+    """Создаёт/пересоздаёт игровые объекты. Возвращает словарь состояния."""
+    arena = Arena()
+    arena_rect_holder.clear()
+    arena_rect_holder.append(arena.rect)
+    return {
+        'arena': arena,
+        'player': Player(),
+        'enemies': [],
+        'projectile_manager': ProjectileManager(),
+        'events': GameEvents(),
+        'wave_spawner': WaveSpawner(
+            arena_rect=arena.rect,
+            spawn_factory=Minion,
+            initial_interval=4.0,
+            min_interval=2.0,
+            interval_decay=0.15,
+            base_count=3,
+            count_growth=2,
+            max_count=40,
+            spawn_margin=20.0
+        ),
+        'weapons': _create_weapons(),
+        'kills': 0,
+    }
+
+
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Roguelite Arena")
+    clock = pygame.time.Clock()
+
+    input_handler = InputHandler()
+    renderer = Renderer()
+    spatial_grid = SpatialGrid(SG_CELL_SIZE)
+    fps_counter = FPSCounter()
+    hud = HUD()
+    game_over_screen = GameOverScreen()
+
+    arena_rect_holder = []
+    state = _create_game(arena_rect_holder)
+
+    game_state = 'playing'  # 'playing' | 'game_over'
+    stats = {'kills': 0, 'waves': 0}
 
     running = True
     accumulator = 0.0
@@ -94,52 +116,94 @@ def main():
         accumulator += frame_dt
 
         fps_counter.update(frame_dt)
-
         input_handler.update()
+
         if input_handler.quit_requested:
             break
 
-        if input_handler.spawn_enemy_requested:
-            enemies.append(Minion(input_handler.mouse_pos))
-
-        movement_vec = input_handler.get_movement_vector()
         mouse_pos = input_handler.mouse_pos
+        left_pressed = input_handler.is_mouse_just_pressed(0)
 
-        for btn_idx, weapon in weapons_by_button.items():
-            weapon.update(frame_dt)
-            is_held = input_handler.is_mouse_held(btn_idx)
-            just_pressed = input_handler.is_mouse_just_pressed(btn_idx)
-            weapon.try_fire(is_held, just_pressed, player.pos, player.angle,
-                            projectile_manager, events)
+        if game_state == 'game_over':
+            restart = (game_over_screen.is_restart_clicked(mouse_pos, left_pressed)
+                       or input_handler.is_key_just_pressed(pygame.K_r))
+            if restart:
+                state = _create_game(arena_rect_holder)
+                game_state = 'playing'
+                accumulator = 0.0
+                renderer.draw(screen, state['arena'], state['player'],
+                              state['enemies'], state['projectile_manager'],
+                              state['events'])
+                hud.draw(screen, state['player'].hp, state['player'].max_hp)
+                pygame.display.flip()
+                continue
 
-        events.update(frame_dt)
+        if game_state == 'playing':
+            movement_vec = input_handler.get_movement_vector()
+            player = state['player']
+            enemies = state['enemies']
+            events = state['events']
+            projectile_manager = state['projectile_manager']
+            wave_spawner = state['wave_spawner']
 
-        while accumulator >= FIXED_DT:
+            if input_handler.spawn_enemy_requested:
+                enemies.append(Minion(input_handler.mouse_pos))
 
-            wave_spawner.update(FIXED_DT, enemies)
+            for btn_idx, weapon in state['weapons'].items():
+                weapon.update(frame_dt)
+                is_held = input_handler.is_mouse_held(btn_idx)
+                just_pressed = input_handler.is_mouse_just_pressed(btn_idx)
+                weapon.try_fire(is_held, just_pressed, player.pos,
+                                player.angle, projectile_manager, events)
 
-            player.update(FIXED_DT, movement_vec, arena.rect, mouse_pos)
+            events.update(frame_dt)
 
-            spatial_grid.clear()
-            for enemy in enemies:
-                if enemy.alive:
-                    spatial_grid.insert(enemy)
+            while accumulator >= FIXED_DT:
 
-            for enemy in enemies:
-                if enemy.alive:
-                    enemy.update(FIXED_DT, player.pos, enemies, spatial_grid)
+                wave_spawner.update(FIXED_DT, enemies)
 
-            projectile_manager.update(FIXED_DT)
+                player.update(FIXED_DT, movement_vec,
+                              state['arena'].rect, mouse_pos)
 
-            check_projectile_enemy_collisions(projectile_manager, enemies, spatial_grid)
-            resolve_enemy_enemy_collisions(enemies, spatial_grid)
-            resolve_enemy_player_collisions(enemies, player)
+                spatial_grid.clear()
+                for enemy in enemies:
+                    if enemy.alive:
+                        spatial_grid.insert(enemy)
 
-            enemies[:] = [e for e in enemies if e.alive]
+                for enemy in enemies:
+                    if enemy.alive:
+                        enemy.update(FIXED_DT, player.pos, enemies,
+                                     spatial_grid)
 
-            accumulator -= FIXED_DT
+                projectile_manager.update(FIXED_DT)
 
-        renderer.draw(screen, arena, player, enemies, projectile_manager, events)
+                _, kills_this_step = check_projectile_enemy_collisions(
+                    projectile_manager, enemies, spatial_grid
+                )
+                state['kills'] += kills_this_step
+
+                check_player_damage(enemies, player, events)
+                resolve_enemy_enemy_collisions(enemies, spatial_grid)
+                resolve_enemy_player_collisions(enemies, player)
+
+                enemies[:] = [e for e in enemies if e.alive]
+
+                accumulator -= FIXED_DT
+        if player.is_dead:
+            game_state = 'game_over'
+            stats['kills'] = state['kills']
+            stats['waves'] = wave_spawner.get_wave_number()
+
+        renderer.draw(screen, state['arena'], state['player'],
+                      state['enemies'], state['projectile_manager'],
+                      state['events'])
+        hud.draw(screen, state['player'].hp, state['player'].max_hp)
+
+        if game_state == 'game_over':
+            game_over_screen.draw(screen, stats, mouse_pos)
+
+        pygame.display.flip()
+
 
         # graph_width = 160
         # graph_height = 60

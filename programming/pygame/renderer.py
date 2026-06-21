@@ -2,7 +2,8 @@ import pygame
 import math
 from constants import (BACKGROUND_COLOR, AMBIENT_COLOR,
                        LIGHT_COLOR, LIGHT_RADIUS, SCREEN_HEIGHT,
-                       SCREEN_WIDTH, LIGHT_ANGLE_RAD, GLOBAL_LIGHT_INTENSITY)
+                       SCREEN_WIDTH, LIGHT_ANGLE_RAD, GLOBAL_LIGHT_INTENSITY,
+                       DAMAGE_FLASH_INTENSITY)
 
 
 class Renderer:
@@ -95,7 +96,15 @@ class Renderer:
         self.light_map.blit(self.muzzle_flash_surface, (0, 0),
                             special_flags=pygame.BLEND_RGB_ADD)
 
+        if events.damage_flash_lifetime > 0.0:
+            t = events.damage_flash_lifetime / max(
+                0.0001, events.damage_flash_max_lifetime
+            )
+            intensity = int(DAMAGE_FLASH_INTENSITY * t)
+            red_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            red_surface.fill((intensity, 0, 0))
+            self.light_map.blit(red_surface, (0, 0),
+                                special_flags=pygame.BLEND_RGB_ADD)
+
         screen.blit(self.light_map, (0, 0),
                     special_flags=pygame.BLEND_RGB_MULT)
-
-        pygame.display.flip()

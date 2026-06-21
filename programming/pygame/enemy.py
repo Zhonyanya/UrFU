@@ -2,26 +2,7 @@ import pygame
 import math
 from constants import (MINION_RADIUS, MINION_COLOR,
                        MINION_MAX_SPEED, MINION_ACCELERATION)
-
-
-def _get_closest_point_on_obb(center, half_w, half_h, angle, point):
-    """Находит ближайшую точку повёрнутого прямоугольника к заданной точке."""
-    diff = point - center
-    # 1. Переводим точку в локальные координаты прямоугольника
-    cos_a = math.cos(-angle)
-    sin_a = math.sin(-angle)
-    lx = diff.x * cos_a - diff.y * sin_a
-    ly = diff.x * sin_a + diff.y * cos_a
-    # 2. Ограничиваем (clamp) границами прямоугольника
-    lx = max(-half_w, min(half_w, lx))
-    ly = max(-half_h, min(half_h, ly))
-    # 3. Возвращаем в мировые координаты
-    cos_a = math.cos(angle)
-    sin_a = math.sin(angle)
-    wx = center.x + lx * cos_a - ly * sin_a
-    wy = center.y + lx * sin_a + ly * cos_a
-    return pygame.math.Vector2(wx, wy)
-
+from collision_system import _get_closest_point_on_obb
 
 class ChaserEnemy:
     """Базовый класс для врагов с steering behaviors (Seek + Separation)."""

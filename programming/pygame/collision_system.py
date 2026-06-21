@@ -1,4 +1,26 @@
 from typing import List
+import pygame
+import math
+from constants import PLAYER_DAMAGE_PER_HIT, DAMAGE_FLASH_DURATION
+
+
+def _get_closest_point_on_obb(center, half_w, half_h, angle, point):
+    """Находит ближайшую точку повёрнутого прямоугольника к заданной точке."""
+    diff = point - center
+    # 1. Переводим точку в локальные координаты прямоугольника
+    cos_a = math.cos(-angle)
+    sin_a = math.sin(-angle)
+    lx = diff.x * cos_a - diff.y * sin_a
+    ly = diff.x * sin_a + diff.y * cos_a
+    # 2. Ограничиваем (clamp) границами прямоугольника
+    lx = max(-half_w, min(half_w, lx))
+    ly = max(-half_h, min(half_h, ly))
+    # 3. Возвращаем в мировые координаты
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    wx = center.x + lx * cos_a - ly * sin_a
+    wy = center.y + lx * sin_a + ly * cos_a
+    return pygame.math.Vector2(wx, wy)
 
 
 def check_projectile_enemy_collisions(projectile_manager, enemies,
@@ -8,7 +30,7 @@ def check_projectile_enemy_collisions(projectile_manager, enemies,
     Возвращает количество попаданий (для статистики/звуков).
     """
     hits = 0
-
+    kills = 0
     for proj in projectile_manager.iter_active():
         nearby = spatial_grid.query_pos(proj.pos)
 
@@ -22,12 +44,35 @@ def check_projectile_enemy_collisions(projectile_manager, enemies,
             min_dist = proj.radius + enemy.radius
 
             if dx * dx + dy * dy < min_dist * min_dist:
+                was_alive = enemy.alive
                 enemy.take_damage(proj.damage)
                 proj.active = False
                 hits += 1
+                if was_alive and not enemy.alive:
+                    kills += 1
                 break  # Пуля попала, проверяем следующую
+    return hits, kills
 
-    return hits
+
+def check_player_damage(enemies, player, events):
+    """Проверяет, получил ли игрок урон.
+    При попадании снимает хп и запускает красную вспышку"""
+    if player.is_invulnerable or player.is_dead:
+        return 0
+    for enemy in enemies:
+        if not enemy.alive:
+            continue
+        closest = _get_closest_point_on_obb(
+            player.pos, player.half_size, player.half_size,
+            player.angle, enemy.pos
+        )
+        dist_vec = enemy.pos - closest
+        dist = dist_vec.length()
+        if dist < enemy.radius:
+            if player.take_damage(PLAYER_DAMAGE_PER_HIT):
+                events.trigger_damage_flash(DAMAGE_FLASH_DURATION)
+                return 1
+    return 0
 
 
 def resolve_enemy_player_collisions(enemies: List, player) -> None:
