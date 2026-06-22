@@ -1,9 +1,12 @@
 import pygame
 import math
-from constants import (PLAYER_SIZE, PLAYER_COLOR, PLAYER_START_POS,
+from config.constants import (PLAYER_SIZE, PLAYER_COLOR, PLAYER_START_POS,
                        PLAYER_MAX_SPEED, PLAYER_ACCELERATION,
                        PLAYER_DECELERATION, PLAYER_MAX_HP,
-                       PLAYER_BLINK_FREQ, PLAYER_INVULNERABILITY_DURATION)
+                       PLAYER_BLINK_FREQ, PLAYER_INVULNERABILITY_DURATION,
+                       PLAYER_FACE_EYE_OFFSET_X, PLAYER_FACE_EYE_OFFSET_Y_TOP,
+                       PLAYER_FACE_EYE_OFFSET_Y_BOTTOM, PLAYER_FACE_EYE_WIDTH,
+                       PLAYER_FACE_EYE_HEIGHT)
 
 
 class Player:
@@ -27,8 +30,17 @@ class Player:
                                                            self.size))
         # "Лицо" (для наглядности направления)
         half = self.half_size
-        pygame.draw.rect(self.base_surface, (0, 255, 0), (half + 2, half - 5, 8, 4))
-        pygame.draw.rect(self.base_surface, (0, 255, 0), (half + 2, half + 2, 8, 4))
+        eye_color = (0, 255, 0)
+        pygame.draw.rect(self.base_surface, eye_color,
+                         (half + PLAYER_FACE_EYE_OFFSET_X,
+                          half + PLAYER_FACE_EYE_OFFSET_Y_TOP,
+                          PLAYER_FACE_EYE_WIDTH,
+                          PLAYER_FACE_EYE_HEIGHT))
+        pygame.draw.rect(self.base_surface, eye_color,
+                         (half + PLAYER_FACE_EYE_OFFSET_X,
+                          half + PLAYER_FACE_EYE_OFFSET_Y_BOTTOM,
+                          PLAYER_FACE_EYE_WIDTH,
+                          PLAYER_FACE_EYE_HEIGHT))
 
     @property
     def is_dead(self):
@@ -70,13 +82,3 @@ class Player:
 
         if self.invulnerability_time > 0.0:
             self.invulnerability_time = max(0.0, self.invulnerability_time - dt)
-
-    def draw(self, surface):
-        if self.is_invulnerable:
-            if int(self.invulnerability_time * PLAYER_BLINK_FREQ) % 2 == 0:
-                return
-
-        rotated = pygame.transform.rotate(self.base_surface,
-                                          -math.degrees(self.angle))
-        rect = rotated.get_rect(center=(self.pos.x, self.pos.y))
-        surface.blit(rotated, rect.topleft)

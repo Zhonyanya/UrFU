@@ -1,6 +1,6 @@
 import pygame
 import math
-from constants import PROJECTILE_POOL_SIZE, PROJECTILE_RADIUS
+from config.constants import PROJECTILE_POOL_SIZE, PROJECTILE_RADIUS
 
 
 class Projectile:

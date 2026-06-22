@@ -1,6 +1,6 @@
 import pygame
-from constants import (HUD_COLOR, HUD_HEART_COLOR, HUD_HEART_SIZE,
-                       HUD_FONT_SIZE, HUD_PADDING)
+from config.constants import (HUD_COLOR, HUD_HEART_COLOR, HUD_HEART_SIZE,
+                              HUD_FONT_SIZE, HUD_PADDING)
 
 
 class HUD:

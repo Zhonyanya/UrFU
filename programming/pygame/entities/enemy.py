@@ -1,8 +1,8 @@
 import pygame
 import math
-from constants import (MINION_RADIUS, MINION_COLOR,
+from config.constants import (MINION_RADIUS, MINION_COLOR,
                        MINION_MAX_SPEED, MINION_ACCELERATION)
-from collision_system import _get_closest_point_on_obb
+from systems.collision_system import _get_closest_point_on_obb
 
 class ChaserEnemy:
     """Базовый класс для врагов с steering behaviors (Seek + Separation)."""
@@ -119,12 +119,6 @@ class ChaserEnemy:
                                                -math.sin(player.angle))
                 player.pos += push_dir * self.radius
             player.rect.center = (round(player.pos.x), round(player.pos.y))
-
-    def draw(self, surface):
-        pygame.draw.circle(surface, self.color, (int(self.pos.x),
-                                                 int(self.pos.y)), self.radius)
-        pygame.draw.circle(surface, self.color, (int(self.pos.x),
-                           int(self.pos.y)), self.radius)
 
 
 class Minion(ChaserEnemy):

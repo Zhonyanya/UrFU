@@ -1,7 +1,7 @@
 from typing import List
 import pygame
 import math
-from constants import PLAYER_DAMAGE_PER_HIT, DAMAGE_FLASH_DURATION
+from config.constants import PLAYER_DAMAGE_PER_HIT, DAMAGE_FLASH_DURATION
 
 
 def _get_closest_point_on_obb(center, half_w, half_h, angle, point):

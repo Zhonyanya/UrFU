@@ -1,33 +1,37 @@
 import pygame
 import sys
-from constants import (SCREEN_HEIGHT, SCREEN_WIDTH, FIXED_DT,
-                       MINIGUN_FIRE_RATE, MINIGUN_PROJECTILE_SPEED,
-                       MINIGUN_SPREAD, MINIGUN_PROJECTILES_PER_SHOT,
-                       MINIGUN_IS_AUTOMATIC, MINIGUN_COLOR,
-                       MINIGUN_MUZZLE_LIFETIME, MINIGUN_MUZZLE_RADIUS,
-                       SHOTGUN_FIRE_RATE, SHOTGUN_PROJECTILE_SPEED,
-                       SHOTGUN_SPREAD, SHOTGUN_PROJECTILES_PER_SHOT,
-                       SHOTGUN_IS_AUTOMATIC, SHOTGUN_COLOR,
-                       SHOTGUN_MUZZLE_LIFETIME, SG_CELL_SIZE, SHOTGUN_DAMAGE,
-                       SHOTGUN_MUZZLE_RADIUS, SHOTGUN_LIFETIME,
-                       MINIGUN_DAMAGE, MINIGUN_LIFETIME)
-from input_handler import InputHandler
-from player import Player
-from arena import Arena
-from renderer import Renderer
-from enemy import Minion
-from spatial_grid import SpatialGrid
-from weapon import Weapon
-from projectile import ProjectileManager
-from events import GameEvents
-from collision_system import (check_projectile_enemy_collisions,
+from config.constants import (SCREEN_HEIGHT, SCREEN_WIDTH, FIXED_DT, MAX_FRAME_DT,
+                              MINIGUN_FIRE_RATE, MINIGUN_PROJECTILE_SPEED,
+                              MINIGUN_SPREAD, MINIGUN_PROJECTILES_PER_SHOT,
+                              MINIGUN_IS_AUTOMATIC, MINIGUN_COLOR,
+                              MINIGUN_MUZZLE_LIFETIME, MINIGUN_MUZZLE_RADIUS,
+                              SHOTGUN_FIRE_RATE, SHOTGUN_PROJECTILE_SPEED,
+                              SHOTGUN_SPREAD, SHOTGUN_PROJECTILES_PER_SHOT,
+                              SHOTGUN_IS_AUTOMATIC, SHOTGUN_COLOR,
+                              SHOTGUN_MUZZLE_LIFETIME, SG_CELL_SIZE, SHOTGUN_DAMAGE,
+                              SHOTGUN_MUZZLE_RADIUS, SHOTGUN_LIFETIME,
+                              MINIGUN_DAMAGE, MINIGUN_LIFETIME,
+                              WAVE_SPAWNER_INITIAL_INTERVAL, WAVE_SPAWNER_MIN_INTERVAL,
+                              WAVE_SPAWNER_INTERVAL_DECAY, WAVE_SPAWNER_BASE_COUNT,
+                              WAVE_SPAWNER_COUNT_GROWTH, WAVE_SPAWNER_MAX_COUNT,
+                              WAVE_SPAWNER_SPAWN_MARGIN)
+from systems.input_handler import InputHandler
+from entities.player import Player
+from world.arena import Arena
+from rendering.renderer import Renderer
+from entities.enemy import Minion
+from systems.spatial_grid import SpatialGrid
+from entities.weapon import Weapon
+from entities.projectile import ProjectileManager
+from systems.events import GameEvents
+from systems.collision_system import (check_projectile_enemy_collisions,
                               resolve_enemy_player_collisions,
                               resolve_enemy_enemy_collisions,
                               check_player_damage)
-from fps_counter import FPSCounter
-from spawner import WaveSpawner
-from hud import HUD
-from game_over_screen import GameOverScreen
+from rendering.fps_counter import FPSCounter
+from world.spawner import WaveSpawner
+from rendering.hud import HUD
+from rendering.game_over_screen import GameOverScreen
 
 
 def _create_weapons() -> dict[int, 'Weapon']:
@@ -74,13 +78,13 @@ def _create_game(arena_rect_holder: list) -> dict:
         'wave_spawner': WaveSpawner(
             arena_rect=arena.rect,
             spawn_factory=Minion,
-            initial_interval=4.0,
-            min_interval=2.0,
-            interval_decay=0.15,
-            base_count=3,
-            count_growth=2,
-            max_count=40,
-            spawn_margin=20.0
+            initial_interval=WAVE_SPAWNER_INITIAL_INTERVAL,
+            min_interval=WAVE_SPAWNER_MIN_INTERVAL,
+            interval_decay=WAVE_SPAWNER_INTERVAL_DECAY,
+            base_count=WAVE_SPAWNER_BASE_COUNT,
+            count_growth=WAVE_SPAWNER_COUNT_GROWTH,
+            max_count=WAVE_SPAWNER_MAX_COUNT,
+            spawn_margin=WAVE_SPAWNER_SPAWN_MARGIN
         ),
         'weapons': _create_weapons(),
         'kills': 0,
@@ -92,7 +96,6 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Roguelite Arena")
     clock = pygame.time.Clock()
-
     input_handler = InputHandler()
     renderer = Renderer()
     spatial_grid = SpatialGrid(SG_CELL_SIZE)
@@ -111,8 +114,8 @@ def main():
 
     while running:
         frame_dt = clock.tick() / 1000.0
-        if frame_dt > 0.25:
-            frame_dt = 0.25
+        if frame_dt > MAX_FRAME_DT:
+            frame_dt = MAX_FRAME_DT
         accumulator += frame_dt
 
         fps_counter.update(frame_dt)
@@ -189,6 +192,7 @@ def main():
                 enemies[:] = [e for e in enemies if e.alive]
 
                 accumulator -= FIXED_DT
+
         if player.is_dead:
             game_state = 'game_over'
             stats['kills'] = state['kills']
@@ -203,7 +207,6 @@ def main():
             game_over_screen.draw(screen, stats, mouse_pos)
 
         pygame.display.flip()
-
 
         # graph_width = 160
         # graph_height = 60
